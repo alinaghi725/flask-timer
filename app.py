@@ -1,32 +1,35 @@
 from flask import Flask, render_template, request, jsonify
 import csv
-import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-CSV_FILE = 'timers.csv'
+def save_time(username, start_time, end_time):
+    start_dt = datetime.fromisoformat(start_time)
+    end_dt = datetime.fromisoformat(end_time)
+    duration = end_dt - start_dt
+    duration_seconds = int(duration.total_seconds())
+
+    with open('times.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([username, start_time, end_time, duration_seconds])
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/save_timer', methods=['POST'])
-def save_timer():
+@app.route('/save', methods=['POST'])
+def save():
     data = request.json
-    name = data.get('name')
-    duration = data.get('duration')
+    username = data.get('username')
+    start_time = data.get('start_time')
+    end_time = data.get('end_time')
 
-    if not name or not duration:
-        return jsonify({'status': 'error', 'message': 'Name and duration required'}), 400
+    if not (username and start_time and end_time):
+        return jsonify({'status': 'error', 'message': 'Missing data'}), 400
 
-    file_exists = os.path.isfile(CSV_FILE)
-    with open(CSV_FILE, 'a', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        if not file_exists:
-            writer.writerow(['Name', 'Duration'])
-        writer.writerow([name, duration])
-
-    return jsonify({'status': 'success', 'message': 'Timer saved'})
+    save_time(username, start_time, end_time)
+    return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
