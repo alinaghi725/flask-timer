@@ -13,8 +13,9 @@
     <h1>تایمر استراحت</h1>
     <input type="text" id="username" placeholder="نام کاربر را وارد کنید" />
     <div id="timer">00:00:00</div>
-    <button id="startBtn">شروع</button>
-    <button id="stopBtn" disabled>پایان</button>
+    <button onclick="startTimer()">شروع تایمر</button>
+<button onclick="stopTimer()">توقف تایمر</button>
+<div id="timer-status"></div>
 
     <script>
         let startTime, interval;
@@ -74,5 +75,44 @@
             document.getElementById('stopBtn').disabled = true;
         });
     </script>
+    <script>
+  let startTime = null;
+  let endTime = null;
+
+  function startTimer() {
+    startTime = Date.now();
+    document.getElementById('timer-status').innerText = "Timer started...";
+  }
+
+  function stopTimer() {
+    if (!startTime) {
+      alert("Timer hasn't started yet!");
+      return;
+    }
+    endTime = Date.now();
+    const duration = endTime - startTime;
+
+    fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date(endTime).toISOString(),
+        duration_ms: duration
+      })
+    })
+    .then(response => response.json())
+    .then(result => {
+      if(result.status === "success"){
+        document.getElementById('timer-status').innerText = "Timer saved successfully!";
+      } else {
+        document.getElementById('timer-status').innerText = "Failed to save timer.";
+      }
+    })
+    .catch(() => {
+      document.getElementById('timer-status').innerText = "Error saving timer.";
+    });
+  }
+</script>
 </body>
 </html>
