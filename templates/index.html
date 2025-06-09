@@ -1,66 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa">
 <head>
     <meta charset="UTF-8" />
-    <title>Timer with Name</title>
+    <title>تایمر شروع و پایان</title>
 </head>
 <body>
-    <h1>تایمر با ثبت نام کاربر</h1>
-
-    <label>نام شما:</label>
-    <input type="text" id="nameInput" />
-
+    <h1>تایمر شروع و پایان</h1>
+    نام: <input type="text" id="nameInput" />
     <br /><br />
-    <button id="startBtn">شروع تایمر 10 ثانیه‌ای</button>
-
-    <p id="timerDisplay">00:00</p>
+    <button id="startBtn">شروع</button>
+    <button id="stopBtn" disabled>توقف</button>
     <p id="status"></p>
 
     <script>
         const startBtn = document.getElementById('startBtn');
-        const timerDisplay = document.getElementById('timerDisplay');
+        const stopBtn = document.getElementById('stopBtn');
         const status = document.getElementById('status');
+        let startTime = null;
 
-        let timerDuration = 10; // 10 seconds
-
-        startBtn.addEventListener('click', () => {
+        startBtn.onclick = () => {
             const name = document.getElementById('nameInput').value.trim();
             if (!name) {
                 alert('لطفا نام خود را وارد کنید');
                 return;
             }
+            startTime = new Date().toISOString();
+            status.textContent = 'تایمر شروع شد: ' + startTime;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        };
 
-            let timeLeft = timerDuration;
-            timerDisplay.textContent = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
-            status.textContent = '';
+        stopBtn.onclick = () => {
+            if (!startTime) {
+                alert('ابتدا باید تایمر را شروع کنید');
+                return;
+            }
+            const endTime = new Date().toISOString();
+            const name = document.getElementById('nameInput').value.trim();
 
-            const interval = setInterval(() => {
-                timeLeft--;
-                timerDisplay.textContent = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
+            status.textContent = 'در حال ذخیره...';
 
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                    status.textContent = 'تایمر تمام شد! در حال ذخیره...';
-
-                    fetch('/save_timer', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({name: name, duration: timerDuration})
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.status === 'success'){
-                            status.textContent = 'ذخیره شد.';
-                        } else {
-                            status.textContent = 'خطا در ذخیره.';
-                        }
-                    })
-                    .catch(() => {
-                        status.textContent = 'خطا در ارتباط با سرور.';
-                    });
+            fetch('/save_timer', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: name,
+                    start_time: startTime,
+                    end_time: endTime
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    status.textContent = 'ذخیره شد';
+                } else {
+                    status.textContent = 'خطا: ' + data.message;
                 }
-            }, 1000);
-        });
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                startTime = null;
+            })
+            .catch(() => {
+                status.textContent = 'خطا در ارتباط با سرور';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                startTime = null;
+            });
+        };
     </script>
 </body>
 </html>
