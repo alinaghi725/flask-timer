@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>تایمر استراحت</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        #timer { font-size: 48px; margin: 20px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 5px; }
+        #usernameDisplay { font-size: 24px; margin-bottom: 10px; color: #333; }
+        input[type="text"] { padding: 8px; font-size: 16px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>⏱️ تایمر استراحت</h1>
+
+    <input type="text" id="username" placeholder="نام خود را وارد کنید" />
+
+    <div id="usernameDisplay"></div>
+    <div id="timer">00:00:00</div>
+
+    <button onclick="startTimer()">شروع</button>
+    <button
