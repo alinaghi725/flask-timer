@@ -64,3 +64,27 @@ def save():
         json.dump(all_data, f, ensure_ascii=False, indent=2)
 
     return jsonify({"status": "success"})
+    import os
+import json
+from flask import Flask, request, jsonify
+
+DATA_FILE = "data.json"
+
+@app.route('/save', methods=['POST'])
+def save():
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No data received"}), 400
+
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            all_data = json.load(f)
+    else:
+        all_data = []
+
+    all_data.append(data)
+
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(all_data, f, ensure_ascii=False, indent=2)
+
+    return jsonify({"status": "success"})
