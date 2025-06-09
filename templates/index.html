@@ -1,22 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>تایمر استراحت</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-        #timer { font-size: 48px; margin: 20px; }
-        button { padding: 10px 20px; font-size: 16px; margin: 5px; }
-        #usernameDisplay { font-size: 24px; margin-bottom: 10px; color: #333; }
-        input[type="text"] { padding: 8px; font-size: 16px; width: 200px; }
-    </style>
+    <meta charset="UTF-8" />
+    <title>Timer with Name</title>
 </head>
 <body>
-    <h1>⏱️ تایمر استراحت</h1>
+    <h1>تایمر با ثبت نام کاربر</h1>
 
-    <input type="text" id="username" placeholder="نام خود را وارد کنید" />
+    <label>نام شما:</label>
+    <input type="text" id="nameInput" />
 
-    <div id="usernameDisplay"></div>
-    <div id="timer">00:00:00</div>
+    <br /><br />
+    <button id="startBtn">شروع تایمر 10 ثانیه‌ای</button>
 
-    <button onclick="startTimer()">شروع</button>
-    <button
+    <p id="timerDisplay">00:00</p>
+    <p id="status"></p>
+
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const status = document.getElementById('status');
+
+        let timerDuration = 10; // 10 seconds
+
+        startBtn.addEventListener('click', () => {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) {
+                alert('لطفا نام خود را وارد کنید');
+                return;
+            }
+
+            let timeLeft = timerDuration;
+            timerDisplay.textContent = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
+            status.textContent = '';
+
+            const interval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    status.textContent = 'تایمر تمام شد! در حال ذخیره...';
+
+                    fetch('/save_timer', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({name: name, duration: timerDuration})
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success'){
+                            status.textContent = 'ذخیره شد.';
+                        } else {
+                            status.textContent = 'خطا در ذخیره.';
+                        }
+                    })
+                    .catch(() => {
+                        status.textContent = 'خطا در ارتباط با سرور.';
+                    });
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
