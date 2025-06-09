@@ -33,3 +33,34 @@ def save():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+from flask import Flask, request, jsonify
+import json
+import os
+
+app = Flask(__name__)
+
+DATA_FILE = "data.json"
+
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')  # یا render_template اگر داری استفاده می‌کنی
+
+@app.route('/save', methods=['POST'])
+def save():
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No data received"}), 400
+
+    # اگر فایل وجود داره، داده‌ها رو می‌خونیم و بهش اضافه می‌کنیم، اگر نه یه لیست خالی درست می‌کنیم
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            all_data = json.load(f)
+    else:
+        all_data = []
+
+    all_data.append(data)
+
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(all_data, f, ensure_ascii=False, indent=2)
+
+    return jsonify({"status": "success"})
