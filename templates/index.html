@@ -2,71 +2,77 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8" />
-    <title>تایمر شروع و پایان</title>
+    <title>تایمر ساده</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; text-align: center; margin-top: 50px; }
+        input, button { font-size: 16px; padding: 8px; margin: 10px; }
+        #timer { font-size: 48px; margin: 20px; }
+    </style>
 </head>
 <body>
-    <h1>تایمر شروع و پایان</h1>
-    نام: <input type="text" id="nameInput" />
-    <br /><br />
-    <button id="startBtn">شروع</button>
-    <button id="stopBtn" disabled>توقف</button>
-    <p id="status"></p>
+    <h1>تایمر ساده</h1>
+    <input type="text" id="username" placeholder="نام کاربر را وارد کنید" />
+    <div id="timer">00:00:00</div>
+    <button id="startBtn">شروع تایمر</button>
+    <button id="stopBtn" disabled>پایان تایمر</button>
 
     <script>
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const status = document.getElementById('status');
-        let startTime = null;
+        let startTime, interval;
 
-        startBtn.onclick = () => {
-            const name = document.getElementById('nameInput').value.trim();
-            if (!name) {
-                alert('لطفا نام خود را وارد کنید');
+        function pad(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = now - startTime; // میلی‌ثانیه
+            const seconds = Math.floor(diff / 1000) % 60;
+            const minutes = Math.floor(diff / (1000 * 60)) % 60;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            document.getElementById('timer').textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const user = document.getElementById('username').value.trim();
+            if (!user) {
+                alert('لطفا نام کاربر را وارد کنید');
                 return;
             }
-            startTime = new Date().toISOString();
-            status.textContent = 'تایمر شروع شد: ' + startTime;
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-        };
+            startTime = new Date();
+            updateTimer();
+            interval = setInterval(updateTimer, 1000);
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+        });
 
-        stopBtn.onclick = () => {
-            if (!startTime) {
-                alert('ابتدا باید تایمر را شروع کنید');
-                return;
-            }
-            const endTime = new Date().toISOString();
-            const name = document.getElementById('nameInput').value.trim();
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            clearInterval(interval);
+            const user = document.getElementById('username').value.trim();
+            const endTime = new Date();
 
-            status.textContent = 'در حال ذخیره...';
-
-            fetch('/save_timer', {
+            fetch('/save', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    name: name,
-                    start_time: startTime,
-                    end_time: endTime
+                    username: user,
+                    start_time: startTime.toISOString(),
+                    end_time: endTime.toISOString()
                 })
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') {
-                    status.textContent = 'ذخیره شد';
+                if(data.status === 'success') {
+                    alert('زمان ذخیره شد');
                 } else {
-                    status.textContent = 'خطا: ' + data.message;
+                    alert('خطا در ذخیره‌سازی: ' + data.message);
                 }
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-                startTime = null;
             })
-            .catch(() => {
-                status.textContent = 'خطا در ارتباط با سرور';
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-                startTime = null;
-            });
-        };
+            .catch(() => alert('خطا در ارسال اطلاعات به سرور'));
+
+            document.getElementById('timer').textContent = "00:00:00";
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        });
     </script>
 </body>
 </html>
